@@ -1,0 +1,51 @@
+
+/*
+Port 4070
+40: Jesus fasted in the wildreness for 40 days so it could repesent leaving something behind "purging, cleansing or removal"
+70: There were 70 elders of Israel who represented the full council and it took 70 years to remove impurities. Representing "final judgement, or completition"
+Just a small joke, nothing serious :D
+
+0. Create options for user to select deletion or check. Make as accessable as possible. Such as:
+    Target      |   Check status    |   Removal
+                |                   |
+    Intune      |        [X]        |     [X]
+    Autopilot   |        [X]        |     [X]
+    Entra       |        [X]        |     [ ]
+
+Always and I mean ALWAYS get user confirmation on deletion. List devices such as:
+
+    Color codes: Red for not found, green for found.
+    Maybe add device owner as an info as well?
+    If user has only checked CHECK STATUS box DO NOT remove.
+
+    PWABC123    Intune   Autopilot   Entra
+    PW123ABC    Intune   Autopilot   Entra
+    PW1A2B3C    Intune   Autopilot   Entra
+
+    [Continue] [Cancel]
+
+    Devices listed above will be deleted as per selection.
+    Click "Continue" below to continue deletion
+
+As for deletion, keep user informed on what's going on. Maybe with color codes?
+
+
+    PWABC123    Intune   Autopilot   Entra
+    PW123ABC    Intune   Autopilot   Entra
+    PW1A2B3C    Intune   Autopilot   Entra
+
+    Waiting for all devices to be deleted before continuing... Please wait.
+
+When devices are deleted, continue to autopilot. The user has seen earlier if the device is found and if it's deleted or not.
+The user has also selected if it's for deletion or not. If a device is already deleted or not found, we can ignore it (maybe?)
+If somehow there is also a device, that's not meant to be there, we can just cross it out for checkout and not deletion.
+
+Stuff to remember:
+1. Fetch devices from list from webpage
+2. Fetch devices with deviceList
+3. List devices from fetch
+ 2.1 If length of returned devices is greater than given list - inform user
+4. Create a prompt for user to remove devices
+5. 
+6. 
+*/ 

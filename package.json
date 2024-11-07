@@ -1,0 +1,19 @@
+{
+  "type": "module",
+  "name": "iaer",
+  "version": "1.0.0",
+  "description": "Intune, autopilot &amp; entra remover, now in JavaScript!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@azure/identity": "^4.5.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "express": "^4.21.1",
+    "isomorphic-fetch": "^3.0.0",
+    "pm2": "^5.4.2"
+  }
+}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/styles.css">
+    <title>IAER JavaScript</title>
+</head>
+<body>
+    <div class="search">
+        <form class="form_" id="serial" action="javascript:void(0);" onsubmit="submitSerials()">
+            <textarea name="serialarea" cols="12" rows="25"></textarea><br>
+            <input type="button" onclick="submitSerials()" class="submit-box" value=" Submit serials ">
+        </form>
+    </div>
+
+    <div id="resultDiv" class="deviceContent">
+        <div class="device-row header">
+            <span>Device name</span>
+            <span>Intune</span>
+            <span>Autopilot</span>
+            <span>Entra</span>
+            <span>Remove</span>
+        </div>
+        <div class="device-row">
+            <span>ABC123ABC</span>
+            <span>X</span>
+            <span>X</span>
+            <span>X</span>
+            <span><input type="checkbox"></span>
+        </div>
+        <div class="device-row">
+            <span>BDC238AW</span>
+            <span>X</span>
+            <span>X</span>
+            <span>X</span>
+            <span><input type="checkbox"></span>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
