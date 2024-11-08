@@ -19,6 +19,20 @@ body {
     padding-bottom: 1em;
 }
 
+.submit-box {
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+.serial_area {
+    text-align: center;
+    resize: none;
+    border-radius: 4px;
+    font-size: 16px;
+    border: 2px solid #000000;
+    padding: 10px;
+}
+
 .search {
     max-width: 20%;
     min-width: 150px;
@@ -36,7 +50,7 @@ body {
     grid-template-columns: minmax(100px, 1fr) repeat(4, minmax(60px, 1fr));
     gap: 0.5em;
     padding: 0.5em 0;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid #303c3f;
 }
 
 .device-row.header {
@@ -50,4 +64,23 @@ body {
     justify-content: center;
     text-align: center;
     white-space: nowrap;
+}
+
+.device-name {
+    cursor: pointer;
+}
+
+.device-details {
+    display: none;
+    padding-top: 1em;
+    padding-bottom: 1em;
+    margin-left: 1em;
+}
+
+.device-details p {
+    margin: 0;
+}
+
+.device-details.show {
+    display: block;
 }

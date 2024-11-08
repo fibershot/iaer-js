@@ -3,7 +3,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import settings from "./js/appSettings.js";
-import { fetchDeviceAndUsers, initializeGraph } from "./js/graph.js";
+import { fetchData, initializeGraph } from "./js/graph.js";
 
 // Define __dirname manually
 const __filename = fileURLToPath(import.meta.url);
@@ -24,7 +24,7 @@ initializeGraph(settings);
 app.post("/api/fetch-data", async (req, res) => {
     const { serials } = req.body;
     try {
-        const results = await fetchDeviceAndUsers(serials);
+        const results = await fetchData(serials);
         if (results) {
             res.status(200).json({ results });
         } else {
