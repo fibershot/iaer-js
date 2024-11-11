@@ -1,5 +1,6 @@
 // In interaction with index.html
 // Function activated from "Submit serials" button.
+var public_data;
 async function submitSerials () {
     console.log("Request received");
     // Fetch data from input field
@@ -49,6 +50,7 @@ async function submitSerials () {
             
                 // variable, data, is the returned data we got from the fetch request
                 const data = result.results;
+                public_data = result.results;
                 // Add data to rows
                 for (let i = 0; i < result.results.length; i++) {
                     const deviceRow = document.createElement("div");
@@ -83,6 +85,8 @@ async function submitSerials () {
                     const checkBoxSpan = document.createElement("span");
                     const checkBox = document.createElement("input");
                     checkBox.type = "checkbox";
+                    checkBox.className = "markedForDeletion";
+                    checkBox.id = data[i].intuneResult + "-" + data[i].autopilotResult + "-" + data[i].entraResult;
                     checkBoxSpan.appendChild(checkBox);
                     deviceRow.appendChild(checkBoxSpan);
             
@@ -100,7 +104,6 @@ async function submitSerials () {
                         second: 'numeric' 
                     };
                     
-                    
                     detailData.innerHTML = `
                         Last login user: ${data[i].lastLogOnUser} <br>
                         Last login time: ${new Date(data[i].lastLogin).toLocaleDateString(undefined, options)} <br>
@@ -110,6 +113,10 @@ async function submitSerials () {
 
                         Model: ${data[i].model}<br><br>
 
+                        Intune found: ${data[i].intuneFound} <br>
+                        Intune ID: ${data[i].intuneId} <br>
+                        Intune name: ${data[i].intuneName} <br><br>
+
                         Autopilot found: ${data[i].autopilotFound} <br>
                         Autopilot ID: ${data[i].autopilotId} <br>
                         Autopilot name: ${data[i].autopilotName} <br><br>
@@ -117,10 +124,10 @@ async function submitSerials () {
                         Entra found: ${data[i].entraFound} <br>
                         Entra ID: ${data[i].entraId} <br>
                         Entra name: ${data[i].entraName} <br><br>
-                        
-                        Intune found: ${data[i].intuneFound} <br>
-                        Intune ID: ${data[i].intuneId} <br>
-                        Intune name: ${data[i].intuneName} <br><br>
+
+                        Serial numbers:<br>
+                        Intune: ${data[i].intuneSerial}<br>
+                        Autopilot: ${data[i].autopilotSerial}
                     `;
                     detailDiv.appendChild(detailData);
 
@@ -131,7 +138,7 @@ async function submitSerials () {
             }
     
         } catch (error) {
-            console.log("Nothing returned.");
+            console.log("Nothing returned." + error);
         }
     }
 }
@@ -149,4 +156,43 @@ function checkColor(object){
 function toggleDetails(element) {
     var detailsDiv = element.parentNode.nextElementSibling;
     detailsDiv.classList.toggle('show');
+}
+
+async function deleteSerials() {
+
+    var selected = [];
+    var check_consistency, removeID;
+    var checkboxes = document.querySelectorAll(".markedForDeletion");
+    var intuneID, autopilotID, entraID;
+
+    checkboxes.forEach((checkbox) => {
+        if (checkbox.checked) {
+            selected.push(checkbox.id);
+            console.log(checkbox.id);
+
+            // Want to make sure we've fetched the correct values
+            check_consistency = checkbox.id.split("-");
+            if (check_consistency[0] === check_consistency[1] && check_consistency[1] === check_consistency[2]){
+                console.log("Correct value in all checks, continuing deletion with ID", check_consistency[0], "in public_data");
+                removeID = check_consistency[0];
+
+                // Send device for removal :(
+                // Jokes aside. Use platform IDs for deletion.
+                if (public_data[removeID].intuneFound) {
+                    intuneID = public_data[removeID].intuneId;
+                }
+                if (public_data[removeID].autopilotFound) {
+                    autopilotID = public_data[removeID].autopilotId;
+                }
+                if (public_data[removeID].entraFound) {
+                    entraID = public_data[removeID].entraId;
+                }
+
+                console.log("Intune ID:", intuneID, "\nAutopilot ID:", autopilotID, "\nEntra ID:", entraID);
+
+            } else {
+                console.error("IDs do NOT match. Fetch cleared, but is unstable for use!");
+            }
+        }
+    });
 }

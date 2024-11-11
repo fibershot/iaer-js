@@ -71,7 +71,10 @@ export async function fetchData(serial) {
             entraName: entra[i].displayName,    // Device name Entra
             entraId: entra[i].deviceId,  // Device ID Entra
             model: intune[i].model,     // Model number
-            lastContactedDateTime: autopilot[i].lastContactedDateTime // Last contact date time
+            lastContactedDateTime: autopilot[i].lastContactedDateTime, // Last contact date time
+            // Debug data
+            intuneSerial: intune[i].serialNumber,
+            autopilotSerial: autopilot[i].serialNumber
         });
     }
 
@@ -89,7 +92,7 @@ async function fetchIntune(serial_array) {
 
     var result = [];
     var user = [];
-    var foundIntune, deviceName, id, userPrincipalName, usersLoggedOn, model;
+    var deviceName, id, userPrincipalName, usersLoggedOn, model, serialNumber, lastLogOnDateTime, lastLogOnUser, lastLogOnUserEmail;
 
     // api fetch call
     for (const obj in serial_array) {
@@ -97,45 +100,70 @@ async function fetchIntune(serial_array) {
             .api("/deviceManagement/managedDevices")
             .version("beta")
             .filter(`contains(serialNumber, '${serial_array[obj]}')`)
-            .select(["deviceName", "id", "usersLoggedOn", "userPrincipalName", "model"])
+            .select(["deviceName", "id", "usersLoggedOn", "userPrincipalName", "model", "serialNumber"])
             .get();
 
-        foundIntune = true;
         if (device.value[0] === undefined){
             console.log("[Intune] No device for", serial_array[obj] ,"found in Intune.");
-            foundIntune = false;
-        } else { console.log("[Intune]", serial_array[obj], "found.");
-        }
+            result.push({
+                foundIntune: false,
+                deviceName: "No data",
+                id: "No data",
+                userPrincipalName: "No data",
+                lastLogOnDateTime: "No data",
+                lastLogOnUser: "No data",
+                lastLogOnUserEmail: "No data",
+                model: "No data",
+                serialNumber: "No data"
+            });
+
+            return result;
+            
+        } else { 
+        console.log("[Intune]", serial_array[obj], "found.");
 
         // Either fill variables with data and if there's none, resort to "No data"
-        deviceName = device.value[0].deviceName || "No data";
-        id = device.value[0].id || "No data";
+        deviceName = device.value[0].deviceName;
+        id = device.value[0].id;
         userPrincipalName = device.value[0].userPrincipalName || "No data";
-        model = device.value[0].model || "No data";
-        usersLoggedOn = device.value[0].usersLoggedOn[(device.value[0].usersLoggedOn.length - 1)] || "No data";
-        user = await fetchUser(usersLoggedOn.userId);
+        serialNumber = device.value[0].serialNumber;
+        model = device.value[0].model;
+
+        if (device.value[0].usersLoggedOn.length <= 0){
+            lastLogOnDateTime = "No data";
+            lastLogOnUser = "No data";
+            lastLogOnUserEmail = "No data";
+        } else {
+            usersLoggedOn = device.value[0].usersLoggedOn[(device.value[0].usersLoggedOn.length - 1)]
+            user = await fetchUser(usersLoggedOn.userId);
+            lastLogOnDateTime = usersLoggedOn.lastLogOnDateTime;
+            lastLogOnUser = user.displayName;
+            lastLogOnUserEmail = user.userPrincipalName;
+        }
+
 
         // Add results to array and return
         result.push({
-            foundIntune: foundIntune,
+            foundIntune: true,
             deviceName: deviceName,
             id: id,
             userPrincipalName: userPrincipalName,
-            lastLogOnDateTime: usersLoggedOn.lastLogOnDateTime,
-            lastLogOnUser: user.displayName,
-            lastLogOnUserEmail: user.userPrincipalName,
-            model: model
+            lastLogOnDateTime: lastLogOnDateTime,
+            lastLogOnUser: lastLogOnUser,
+            lastLogOnUserEmail: lastLogOnUserEmail,
+            model: model,
+            serialNumber: serialNumber
         });
     }
 
     return result;
-}
+}}
 
 // Autopilot data
 async function fetchAutopilot(serial_array) {
 
     var result = [];
-    var foundAutopilot, displayName, id, lastContactedDateTime;
+    var displayName, id, lastContactedDateTime, serialNumber;
 
     // api fetch call
     for (const obj in serial_array) {
@@ -146,63 +174,84 @@ async function fetchAutopilot(serial_array) {
             //.select(["displayName"])
             .get();
 
-        foundAutopilot = true;
         if (device.value[0] === undefined){
             console.log("[Autopilot] No device for", serial_array[obj] ,"found.");
-            foundAutopilot = false;
-        } else { console.log("[Autopilot]", serial_array[obj], "found.");}
+           
+            result.push({
+                foundAutopilot: false,
+                displayName: "No data",
+                id: "No data",
+                lastContactedDateTime: "No data",
+                serialNumber: "No data"
+            });
+
+            return result;
+        } 
+        else { 
+            
+        console.log("[Autopilot]", serial_array[obj], "found.");
 
         // Either fill variables with data and if there's none, resort to "No data"
-        displayName = device.value[0].displayName || "No data";
-        id = device.value[0].id || "No data";
-        lastContactedDateTime = device.value[0].lastContactedDateTime || "No data";
+        displayName = device.value[0].displayName;
+        id = device.value[0].id;
+        lastContactedDateTime = device.value[0].lastContactedDateTime;
+        serialNumber = device.value[0].serialNumber;
 
         // Add results to array and return
         result.push({
-            foundAutopilot: foundAutopilot,
+            foundAutopilot: true,
             displayName: displayName,
             id: id,
-            lastContactedDateTime: lastContactedDateTime
+            lastContactedDateTime: lastContactedDateTime,
+            serialNumber: serialNumber
         });
     }
 
     return result;
-}
+}}
 
 // Entra data
 async function fetchEntra(serial_array) {
 
     var result = [];
-    var foundEntra, displayName, deviceId;
+    var displayName, deviceId;
 
     // api fetch call
     for (const obj in serial_array) {
         const device = await _appClient
             .api("/devices")
             .header("ConsistencyLevel", "eventual")
-            .search(`"displayName:${serial_array[0]}"`)
+            .search(`"displayName:${serial_array[obj]}"`)
             .get();
 
-        foundEntra = true;
         if (device.value[0] === undefined){
             console.log("[Entra] No device for", serial_array[obj] ,"found.");
-            foundEntra = false;
-        } else { console.log("[Entra]", serial_array[obj], "found.");}
+            result.push({
+                foundEntra: false,
+                displayName: "No data",
+                deviceId: "No data"
+            });
+
+            return result;
+
+        } else { 
+            
+        console.log("[Entra]", serial_array[obj], "found.");
 
         // Either fill variables with data and if there's none, resort to "No data"
-        displayName = device.value[0].displayName || "No data";
-        deviceId = device.value[0].id || "No data";
+        displayName = device.value[0].displayName;
+        deviceId = device.value[0].id;
 
         // Add results to array and return
         result.push({
-            foundEntra: foundEntra,
+            foundEntra: true,
             displayName: displayName,
             deviceId: deviceId,
         });
-    }
 
-    return result;
-}
+        return result;
+    }
+}}
 
 // Fetch user from the lastest user ID that logged in
 async function fetchUser(user_id){
@@ -216,7 +265,25 @@ async function fetchUser(user_id){
         return user;
     }
     catch (error) {
-        console.log("[ERROR] Error fetching user for ID:", user_id, error);
+        console.log("[ERROR] Error fetching user for ID:", user_id);
         return user;
     }
+}
+
+// Function for deletion
+export async function removeDevice(serial) {
+    var serial_array = serial.split("\n");
+    console.log(serial_array[0], serial_array[1], serial_array[2]);
+}
+
+async function deleteIntune(DEVICE_ID) {
+
+}
+
+async function deleteAutopilot(DEVICE_ID) {
+    
+}
+
+async function deleteEntra(DEVICE_ID) {
+
 }

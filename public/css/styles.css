@@ -3,6 +3,7 @@
     src: url("../fonts/opensans.ttf");
 }
 
+
 /*div { outline: 1px solid red; }*/
 
 body {
@@ -10,6 +11,10 @@ body {
     flex-direction: row;
     gap: 1em;
     font-family: opensans;
+}
+
+.options {
+    padding-left: 1.85em;
 }
 
 .form_

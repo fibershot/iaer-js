@@ -9,20 +9,19 @@
 <body>
     <div class="search">
         <form class="form_" id="serial" action="javascript:void(0);" onsubmit="submitSerials()">
-            <textarea class ="serial_area" name="serialarea" cols="10" rows="25"></textarea><br>
+            <textarea class ="serial_area" name="serialarea" cols="10" rows="25" placeholder="Serials here!"></textarea><br>
             <input type="button" onclick="submitSerials()" class="submit-box" value=" Submit serials ">
         </form>
-    </div>
 
-    <div id="resultDiv" class="deviceContent">
-        <div class="device-row header">
-            <span>Name</span>
-            <span>Intune</span>
-            <span>Autopilot</span>
-            <span>Entra</span>
-            <span>Select</span>
+        <div class="options" id="options">
+            <input type="button" onclick="deleteSerials()" class="submit-box" value=" Delete selected ">
         </div>
     </div>
+
+    <div id="resultDiv" class="deviceContent"><br>&nbsp;
+        <p>Enter serials into the left input field (max length per serial is 10).
+        <br>Seperate serials with a linebreak by hitting Enter.<br>
+        After all desired serials are entered, click "Submit serials"!</p></div>
 
     <script src="/js/app.js"></script>
 </body>
