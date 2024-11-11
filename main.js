@@ -1,4 +1,4 @@
-// Main script
+// Import modules
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -17,7 +17,9 @@ app.use(express.static("public"));
 app.use("/css", express.static(path.join(__dirname, "public", "css"), { setHeaders: (res) => res.set("Content-Type", "text/css") }));
 app.use("/js", express.static(path.join(__dirname, "public", "js"), { setHeaders: (res) => res.set("Content-Type", "application/javascript") }));
 app.use("/fonts", express.static(path.join(__dirname, "public", "fonts"), { setHeaders: (res) => res.set("Content-Type", "font/ttf") }));
+app.use("/media", express.static(path.join(__dirname, "public", "media"), { setHeaders: (res, path) => { if (path.endsWith(".gif")) { res.set("Content-Type", "image/gif");}}}));
 
+// Connect to Graph
 initializeGraph(settings);
 
 // Data fetching from graph.js

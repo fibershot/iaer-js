@@ -39,20 +39,19 @@ export async function initializeGraph(settings) {
     }
 }
 
-// Fetch device and check if they exist. Save identifying data.
+// Fetch device and check if it exists. Save identifying data.
 export async function fetchData(serial) {
 
+    // The exported serials from app.js - split from the point of linebreak (\n)
     var serial_array = serial.split("\n");
+    var intune = [], autopilot = [], entra = [], result = [];
 
-    var intune = [];
-    var autopilot = [];
-    var entra = [];
-    var result = [];
-
+    // Each platform has it's own function for data fetching
     intune = await fetchIntune(serial_array);
     autopilot = await fetchAutopilot(serial_array);
     entra = await fetchEntra(serial_array);
     
+    // Merge data from all the arrays into a final version
     for (let i = 0; i < (serial_array.length); i++) {
         result.push({
             lastLogin: intune[i].lastLogOnDateTime, // Latest login
@@ -92,6 +91,7 @@ async function fetchIntune(serial_array) {
     var user = [];
     var foundIntune, deviceName, id, userPrincipalName, usersLoggedOn, model;
 
+    // api fetch call
     for (const obj in serial_array) {
         const device = await _appClient
             .api("/deviceManagement/managedDevices")
@@ -107,6 +107,7 @@ async function fetchIntune(serial_array) {
         } else { console.log("[Intune]", serial_array[obj], "found.");
         }
 
+        // Either fill variables with data and if there's none, resort to "No data"
         deviceName = device.value[0].deviceName || "No data";
         id = device.value[0].id || "No data";
         userPrincipalName = device.value[0].userPrincipalName || "No data";
@@ -114,6 +115,7 @@ async function fetchIntune(serial_array) {
         usersLoggedOn = device.value[0].usersLoggedOn[(device.value[0].usersLoggedOn.length - 1)] || "No data";
         user = await fetchUser(usersLoggedOn.userId);
 
+        // Add results to array and return
         result.push({
             foundIntune: foundIntune,
             deviceName: deviceName,
@@ -135,6 +137,7 @@ async function fetchAutopilot(serial_array) {
     var result = [];
     var foundAutopilot, displayName, id, lastContactedDateTime;
 
+    // api fetch call
     for (const obj in serial_array) {
         const device = await _appClient
             .api("/deviceManagement/windowsAutopilotDeviceIdentities")
@@ -149,10 +152,12 @@ async function fetchAutopilot(serial_array) {
             foundAutopilot = false;
         } else { console.log("[Autopilot]", serial_array[obj], "found.");}
 
+        // Either fill variables with data and if there's none, resort to "No data"
         displayName = device.value[0].displayName || "No data";
         id = device.value[0].id || "No data";
         lastContactedDateTime = device.value[0].lastContactedDateTime || "No data";
 
+        // Add results to array and return
         result.push({
             foundAutopilot: foundAutopilot,
             displayName: displayName,
@@ -170,6 +175,7 @@ async function fetchEntra(serial_array) {
     var result = [];
     var foundEntra, displayName, deviceId;
 
+    // api fetch call
     for (const obj in serial_array) {
         const device = await _appClient
             .api("/devices")
@@ -183,9 +189,11 @@ async function fetchEntra(serial_array) {
             foundEntra = false;
         } else { console.log("[Entra]", serial_array[obj], "found.");}
 
+        // Either fill variables with data and if there's none, resort to "No data"
         displayName = device.value[0].displayName || "No data";
         deviceId = device.value[0].id || "No data";
 
+        // Add results to array and return
         result.push({
             foundEntra: foundEntra,
             displayName: displayName,
@@ -196,6 +204,7 @@ async function fetchEntra(serial_array) {
     return result;
 }
 
+// Fetch user from the lastest user ID that logged in
 async function fetchUser(user_id){
     var user = "No data";
     try {
