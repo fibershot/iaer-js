@@ -46,4 +46,5 @@ app.get("/", (req, res) => {
 // Open server for port 4070
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+    console.log("Logs: [I] Intune - [A] Autopilot - [E] Entra - [U] User - [!] Info");
 });

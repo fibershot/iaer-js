@@ -11,6 +11,7 @@ async function submitSerials () {
         window.alert("Serial field cannot be empty.");
     } else {
         const resultDiv = document.getElementById("resultDiv");
+        const logDiv = document.getElementById("log");
         const loading = document.createElement("img");
         loading.src="/media/spinner.gif"; loading.style="padding-left: 1.5em; max-width: 50px; max-height: 50px;";
         resultDiv.innerHTML = "<br>&nbsp;<br>Fetching data...";
@@ -35,7 +36,8 @@ async function submitSerials () {
             if (response.ok) {
                 // Get resultDiv and empty it
                 resultDiv.innerHTML = "";
-            
+                logDiv.textContent = "";
+
                 // Create header
                 const headerRow = document.createElement("div");
                 headerRow.className = "device-row header";
@@ -53,6 +55,13 @@ async function submitSerials () {
                 public_data = result.results;
                 // Add data to rows
                 for (let i = 0; i < result.results.length; i++) {
+
+                    if (!data[i].intuneFound && !data[i].autopilotFound && !data[i].intuneFound){
+                        console.log("The search with " + data[i].initialReq + " returned no results.");
+                        logDiv.textContent += `${data[i].initialReq} invalid.\r\n`;
+                        continue;
+                    }
+
                     const deviceRow = document.createElement("div");
                     deviceRow.className = "device-row";
             
@@ -62,7 +71,14 @@ async function submitSerials () {
                     nameSpan.onclick = function() {
                         toggleDetails(nameSpan);
                     }
-                    nameSpan.textContent = data[i].intuneName;
+
+                    if (!data[i].intuneFound) {
+                        nameSpan.textContent = data[i].autopilotName;
+                        if (!data[i].autopilotFound) {
+                            nameSpan.textContent = data[i].entraName;
+                        }
+                    } else { nameSpan.textContent = data[i].intuneName; }
+                    
                     deviceRow.appendChild(nameSpan);
             
                     // Intune, Autopilot, and Entra check
@@ -105,32 +121,34 @@ async function submitSerials () {
                     };
                     
                     detailData.innerHTML = `
+                        <strong>Login</strong><br>
                         Last login user: ${data[i].lastLogOnUser} <br>
                         Last login time: ${new Date(data[i].lastLogin).toLocaleDateString(undefined, options)} <br>
                         Last contact time: ${new Date(data[i].lastContactedDateTime).toLocaleDateString(undefined, options)}<br>
                         Last login email: ${data[i].lastLogOnUserEmail} <br>
                         User principal name: ${data[i].userPrincipalName}<br><br>
 
-                        Model: ${data[i].model}<br><br>
-
+                        <strong>Intune</strong><br>
                         Intune found: ${data[i].intuneFound} <br>
                         Intune ID: ${data[i].intuneId} <br>
-                        Intune name: ${data[i].intuneName} <br><br>
+                        Intune name: ${data[i].intuneName} <br>
+                        Intune serial: ${data[i].intuneSerial}<br><br>
 
+                        <strong>Autopilot</strong><br>
                         Autopilot found: ${data[i].autopilotFound} <br>
                         Autopilot ID: ${data[i].autopilotId} <br>
-                        Autopilot name: ${data[i].autopilotName} <br><br>
+                        Autopilot name: ${data[i].autopilotName} <br>
+                        Autopilot serial: ${data[i].autopilotSerial}<br><br>
                         
+                        <strong>Entra</strong><br>
                         Entra found: ${data[i].entraFound} <br>
                         Entra ID: ${data[i].entraId} <br>
                         Entra name: ${data[i].entraName} <br><br>
 
-                        Serial numbers:<br>
-                        Intune: ${data[i].intuneSerial}<br>
-                        Autopilot: ${data[i].autopilotSerial}
+                        <strong>Hardware</strong><br>
+                        Model: ${data[i].model}<br><br>
                     `;
                     detailDiv.appendChild(detailData);
-
                     resultDiv.appendChild(deviceRow);
                     resultDiv.appendChild(detailDiv);
                     
