@@ -56,7 +56,7 @@ async function submitSerials () {
                 // Add data to rows
                 for (let i = 0; i < result.results.length; i++) {
 
-                    if (!data[i].intuneFound && !data[i].autopilotFound && !data[i].intuneFound){
+                    if (!data[i].intuneFound && !data[i].autopilotFound && !data[i].entraFound){
                         console.log("The search with " + data[i].initialReq + " returned no results.");
                         logDiv.textContent += `${data[i].initialReq} invalid.\r\n`;
                         continue;
@@ -176,41 +176,113 @@ function toggleDetails(element) {
     detailsDiv.classList.toggle('show');
 }
 
+// Function for deletion
 async function deleteSerials() {
 
     var selected = [];
-    var check_consistency, removeID;
+    var intuneDevicesToDelete = [], autopilotDevicesToDelete = [], entraDevicesToDelete = [];
+    var intuneResult, autopilotResult, entraResult;
+    var intuneDeleted = false, autopilotDeleted = false, entraDeleted = false;
+    var check_consistency, consistency, removeID;
     var checkboxes = document.querySelectorAll(".markedForDeletion");
     var intuneID, autopilotID, entraID;
 
     checkboxes.forEach((checkbox) => {
         if (checkbox.checked) {
             selected.push(checkbox.id);
-            console.log(checkbox.id);
-
             // Want to make sure we've fetched the correct values
             check_consistency = checkbox.id.split("-");
             if (check_consistency[0] === check_consistency[1] && check_consistency[1] === check_consistency[2]){
                 console.log("Correct value in all checks, continuing deletion with ID", check_consistency[0], "in public_data");
                 removeID = check_consistency[0];
+                consistency = true;
 
-                // Send device for removal :(
-                // Jokes aside. Use platform IDs for deletion.
+                // Intune deletion statement
                 if (public_data[removeID].intuneFound) {
                     intuneID = public_data[removeID].intuneId;
-                }
-                if (public_data[removeID].autopilotFound) {
-                    autopilotID = public_data[removeID].autopilotId;
-                }
-                if (public_data[removeID].entraFound) {
-                    entraID = public_data[removeID].entraId;
+                    intuneDevicesToDelete.push(intuneID);
+                } else {
+                    intuneID = "NO_DEVICE";
                 }
 
-                console.log("Intune ID:", intuneID, "\nAutopilot ID:", autopilotID, "\nEntra ID:", entraID);
+                // Autopilot deletion statement
+                if (public_data[removeID].autopilotFound) {
+                    autopilotID = public_data[removeID].autopilotId;
+                    autopilotDevicesToDelete.push(autopilotID);
+                } else {
+                    autopilotID = "NO_DEVICE";
+                }
+
+                // Entra deletion statement
+                if (public_data[removeID].entraFound) {
+                    entraID = public_data[removeID].entraId;
+                    entraDevicesToDelete.push(entraID);
+                } else {
+                    entraID = "NO_DEVICE";
+                }
+
+                console.log("Results for", check_consistency[removeID] + ":\n"+
+                    "Intune deletion " + intuneID, "\nAutopilot deletion " + autopilotID + "\nEntra deletion " + entraID
+                );
 
             } else {
                 console.error("IDs do NOT match. Fetch cleared, but is unstable for use!");
+                consistency = false;
             }
         }
     });
+
+    if (consistency) {
+        console.log("Devices to delete: ", intuneDevicesToDelete, autopilotDevicesToDelete, entraDevicesToDelete);
+
+        // Delete Intune device
+        if (intuneDevicesToDelete.length > 0) {
+            intuneResult = await deleteDevices("/api/delete-intune", intuneDevicesToDelete);
+            intuneDeleted = intuneResult.success;
+        } else {
+            intuneDeleted = true;
+        }
+        
+        // Delete Autopilot device
+        if (autopilotDevicesToDelete.length > 0) {
+            if (intuneDeleted){
+                autopilotResult = await deleteDevices("/api/delete-autopilot", autopilotDevicesToDelete);
+                autopilotDeleted = autopilotResult.success;
+            } else {
+                console.log("Cannot continue Autopilot deletion - Intune devices not deleted!");
+                autopilotDeleted = false;
+            }
+        } else {
+            autopilotDeleted = true;
+        }
+
+        // Delete Enta device
+        if (entraDevicesToDelete.length > 0) {
+            if (autopilotDeleted) {
+                entraResult = await deleteDevices("/api/delete-entra", entraDevicesToDelete);
+                entraDeleted = entraResult.success;
+            } else {
+                console.log("Cannot continue Entra deletion - Autopilot devices not deleted!");
+                entraDeleted = false;
+            }
+        } else {
+            entraDeleted = true;
+        }
+    
+        // Log results for each type
+        console.log("Intune Deletion Result:", intuneResult, intuneDeleted);
+        console.log("Autopilot Deletion Result:", autopilotResult, autopilotDeleted);
+        console.log("Entra Deletion Result:", entraResult, entraDeleted);
+    }
+}
+
+async function deleteDevices(endpoint, devices) {
+    const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ devices }),
+    });
+    return response.json(); // Assuming the server responds with a JSON status
 }

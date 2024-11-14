@@ -221,7 +221,6 @@ async function fetchEntra(serial_array) {
 
 // Fetch user from the lastest user ID that logged in
 async function fetchUser(user_id){
-
     try {
         const user = await _appClient
             .api(`/users/${user_id}`)
@@ -232,25 +231,162 @@ async function fetchUser(user_id){
         return user;
     }
     catch (error) {
-        console.log("[U] Failed data fetch for", user_id);
+        console.log("[U] Failed data fetch for user.");
         return false;
     }
 }
 
-// Function for deletion
-export async function removeDevice(serial) {
-    var serial_array = serial.split("\n");
-    console.log(serial_array[0], serial_array[1], serial_array[2]);
+// Intune deletion
+export async function deleteIntuneDevices(DEVICES) {
+    for (const device of DEVICES) {
+        console.log("[I] Deleting device: " + device);
+        
+        try {
+            const deletion = await _appClient
+            .api(`/deviceManagement/managedDevices/${device}`)
+            //.get();
+            .delete();
+
+            console.log("[I] Device deleted - " + deletion);
+            return true;
+        } catch (error) {
+            // Error
+            console.log(error);
+            return false;
+        }
+    };
+
+    // Check that device is deleted in the interval of one minute. Max checks 15, before returning false.
+    const interval = 60000, maxChecks = 20;
+    for (const device of DEVICES){
+        let deleted = false;
+        let attempts = 0;
+        
+        while (!deleted && attempts < maxChecks) {
+            console.log("[I] Autopilot deletion request(s) sent. Checking if device(s) exist (attempts left", (maxChecks - attempts) + ")");
+            try {
+                await new Promise(resolve => setTimeout(resolve, interval));
+                const check = await _appClient
+                .api(`/deviceManagement/managedDevices/${device}`)
+                .get();
+            } catch (error) {
+                if (error.statusCode === 404) {
+                    console.log(`[I] Device ${device} deletion confirmed at ${attempts} attempts.`)
+                    deleted = true;
+                } else {
+                    console.log("[I] API request returned a non-404 error:", error);
+                }
+            }
+            attempts++;
+        }
+
+        if (!deleted) {
+            console.log("[I] Max attempts reached for", device + ". Device deletion not confirmed.");
+            return false;
+        }
+    }
+
+    console.log("[I] Continuing to Autopilot");
+    return true;
 }
 
-async function deleteIntune(DEVICE_ID) {
+// Autopilot deletion
+export async function deleteAutopilotDevices(DEVICES) {
+    for (const device of DEVICES) {
+        console.log("[A] Deleting device: " + device);
+        try {
+            const deletion = await _appClient
+            .api(`/deviceManagement/windowsAutopilotDeviceIdentities/${device}`)
+            //.get();
+            .delete();
 
+            console.log("[A] Device deleted - " + deletion);
+        } catch (error) {
+            console.log(error);
+            return false;
+        }
+    };
+
+    const interval = 60000, maxChecks = 20;
+    for (const device of DEVICES){
+        let deleted = false;
+        let attempts = 0;
+        
+        while (!deleted && attempts < maxChecks) {
+            console.log("[A] Autopilot deletion request(s) sent. Checking if device(s) exist (attempts left", (maxChecks - attempts) + ")");
+            try {
+                await new Promise(resolve => setTimeout(resolve, interval));
+                const check = await _appClient
+                .api(`/deviceManagement/windowsAutopilotDeviceIdentities/${device}`)
+                .get();
+            } catch (error) {
+                if (error.statusCode === 404) {
+                    console.log(`[A] Device ${device} deletion confirmed.`)
+                    deleted = true;
+                } else {
+                    console.log("[A] API request returned a non-404 error:", error);
+                }
+            }
+            attempts++;
+        }
+
+        if (!deleted) {
+            console.log("[A] Max attempts reached for", device + ". Device deletion not confirmed.");
+            return false;
+        }
+    }
+
+    console.log("[A] Continuing to Entra");
+    return true;
 }
 
-async function deleteAutopilot(DEVICE_ID) {
-    
-}
+// Entra deletion
+export async function deleteEntraDevices(DEVICES) {
+    for (const device of DEVICES) {
+        console.log("[E] Deleting device: " + device);
+        try {
+            const deletion = await _appClient
+            .api(`/devices/${device}`)
+            //.get();
+            .delete();
 
-async function deleteEntra(DEVICE_ID) {
+            console.log("[E] Device deleted - " + device);
+        } catch (error) {
+            console.log(error);
+            return false;
+        }
+    };
 
+    const interval = 60000, maxChecks = 20;
+    for (const device of DEVICES){
+        let deleted = false;
+        let attempts = 0;
+        
+        while (!deleted && attempts < maxChecks) {
+            console.log("[E] Entra deletion request(s) sent. Checking if device(s) exist (attempts left", (maxChecks - attempts) + ")");
+            try {
+                await new Promise(resolve => setTimeout(resolve, interval));
+                const check = await _appClient
+                .api(`/devices/${device}`)
+                .get();
+
+            } catch (error) {
+                if (error.statusCode === 404) {
+                    console.log(`[E] Device ${device} deletion confirmed.`)
+                    deleted = true;
+                } else {
+                    console.log("[E] API request returned a non-404 error:", error);
+                }
+            }
+            attempts++;
+        }
+
+        if (!deleted) {
+            console.log("[E] Max attempts reached for", device + ". Device deletion not confirmed.");
+            return false;
+        }
+    }
+
+    console.log("[E] Deletions complete.");
+    return true;
 }

@@ -3,7 +3,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import settings from "./js/appSettings.js";
-import { fetchData, initializeGraph } from "./js/graph.js";
+import { deleteAutopilotDevices, deleteEntraDevices, deleteIntuneDevices, fetchData, initializeGraph } from "./js/graph.js";
 
 // Define __dirname manually
 const __filename = fileURLToPath(import.meta.url);
@@ -35,6 +35,42 @@ app.post("/api/fetch-data", async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: error})
+    }
+});
+
+// Delete intune devices
+app.post("/api/delete-intune", async (req, res) => {
+    try {
+        const { devices } = req.body;
+        const results = await deleteIntuneDevices(devices);
+        res.json({ success: true, results });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Delete autopilot devices
+app.post("/api/delete-autopilot", async (req, res) => {
+    try {
+        const { devices } = req.body;
+        const results = await deleteAutopilotDevices(devices);
+        res.json({ success: true, results });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Delete entra devices
+app.post("/api/delete-entra", async (req, res) => {
+    try {
+        const { devices } = req.body;
+        const results = await deleteEntraDevices(devices);
+        res.json({ success: true, results });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
