@@ -11,7 +11,7 @@ As of now, I have a few checks, cleanup and more failchecks to implement, use wi
 On the web application users can submit serials to the input area. This works best, when the device's name includes the serial
 since Entra devices cannot be fetched via serials.</br></br>
 Fetched devices will be listed with latest login details, IDs from the different systems, serials, model info and more.</br>
-Each successfully listed device may be selected and deleted with the press of a button. The process is automatic and if</br>
+Each successfully listed device may be selected and deleted with the press of a button. The process is automatic and if
 the deletion fails at any step, the program interrupts itself for analysation.</br></br>
 Failchecks have been implemented in many places. Deletion does not happen, unless the user desides to so. Fetching doesn't delete anything.
 
