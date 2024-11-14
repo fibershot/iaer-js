@@ -238,20 +238,18 @@ async function fetchUser(user_id){
 
 // Intune deletion
 export async function deleteIntuneDevices(DEVICES) {
+    let allDeleted = true;
     for (const device of DEVICES) {
         console.log("[I] Deleting device: " + device);
         
         try {
             const deletion = await _appClient
             .api(`/deviceManagement/managedDevices/${device}`)
-            //.get();
             .delete();
-
-            console.log("[I] Device deleted - " + deletion);
-            return true;
+            console.log("[I] Device deleted - " + device);
         } catch (error) {
             // Error
-            console.log(error);
+            console.log("[I] Error!:", error);
             return false;
         }
     };
@@ -263,15 +261,16 @@ export async function deleteIntuneDevices(DEVICES) {
         let attempts = 0;
         
         while (!deleted && attempts < maxChecks) {
-            console.log("[I] Autopilot deletion request(s) sent. Checking if device(s) exist (attempts left", (maxChecks - attempts) + ")");
+            console.log("[I] Intune deletion request(s) sent. Checking if device(s) exist (attempts left", (maxChecks - attempts) + ")");
+            await new Promise(resolve => setTimeout(resolve, interval));
             try {
-                await new Promise(resolve => setTimeout(resolve, interval));
                 const check = await _appClient
                 .api(`/deviceManagement/managedDevices/${device}`)
                 .get();
+                console.log("[I] Device " + device + " still found.");
             } catch (error) {
                 if (error.statusCode === 404) {
-                    console.log(`[I] Device ${device} deletion confirmed at ${attempts} attempts.`)
+                    console.log(`[I] Device ${device} deletion confirmed at ${attempts} attempts.`);
                     deleted = true;
                 } else {
                     console.log("[I] API request returned a non-404 error:", error);
@@ -282,46 +281,67 @@ export async function deleteIntuneDevices(DEVICES) {
 
         if (!deleted) {
             console.log("[I] Max attempts reached for", device + ". Device deletion not confirmed.");
-            return false;
+            allDeleted = false;
         }
     }
 
-    console.log("[I] Continuing to Autopilot");
-    return true;
+    if (allDeleted) {
+        console.log("[I] Intune deletions complete.");
+        return true;
+    } else {
+        return false;
+    }
 }
 
 // Autopilot deletion
 export async function deleteAutopilotDevices(DEVICES) {
+    let allDeleted = true;
+    // Loop all devices and delete them
     for (const device of DEVICES) {
         console.log("[A] Deleting device: " + device);
         try {
             const deletion = await _appClient
-            .api(`/deviceManagement/windowsAutopilotDeviceIdentities/${device}`)
-            //.get();
-            .delete();
-
-            console.log("[A] Device deleted - " + deletion);
+                .api(`/deviceManagement/windowsAutopilotDeviceIdentities/${device}`)
+                .delete();
+            console.log("[A] Device deleted - " + device);
         } catch (error) {
-            console.log(error);
+            console.log("[A] Error during deletion:", error);
             return false;
         }
-    };
+    }
 
-    const interval = 60000, maxChecks = 20;
-    for (const device of DEVICES){
+    // Check if the devices are deleted or not
+    let initialInterval = 30000; // 30 second inverval
+    const maxChecks = 6; // 10 attempts before returning false
+    
+    // Loop through devices, again
+    for (const device of DEVICES) {
         let deleted = false;
         let attempts = 0;
-        
+
+        // While deleted flag is false and attempts aren't more than the max. amount
         while (!deleted && attempts < maxChecks) {
-            console.log("[A] Autopilot deletion request(s) sent. Checking if device(s) exist (attempts left", (maxChecks - attempts) + ")");
             try {
-                await new Promise(resolve => setTimeout(resolve, interval));
-                const check = await _appClient
-                .api(`/deviceManagement/windowsAutopilotDeviceIdentities/${device}`)
-                .get();
+                // Wait for 30 seconds -> 60 seconds -> 120 seconds etc. (max. 16 min @ attempt )
+                const waitTime = initialInterval * Math.pow(2, attempts);
+                console.log(`[A] Waiting ${waitTime / 1000} seconds before checking deletion status for device ${device} (attempt ${attempts + 1})`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                // Fetch all devices instead of a single one to bypass caching
+                const allDevices = await _appClient
+                    .api(`/deviceManagement/windowsAutopilotDeviceIdentities`)
+                    .get();
+                
+                // Check if device is still in the list
+                if (!allDevices.value.find(d => d.id === device)) {
+                    console.log(`[A] Device ${device} confirmed deleted.`);
+                    deleted = true;
+                } else {
+                    console.log(`[A] Device ${device} still exists.`);
+                }
+                // We can use 404 to confirm deletion. Other codes, should be noted.
             } catch (error) {
                 if (error.statusCode === 404) {
-                    console.log(`[A] Device ${device} deletion confirmed.`)
+                    console.log(`[A] Device ${device} deletion confirmed by 404.`);
                     deleted = true;
                 } else {
                     console.log("[A] API request returned a non-404 error:", error);
@@ -329,34 +349,42 @@ export async function deleteAutopilotDevices(DEVICES) {
             }
             attempts++;
         }
-
+        
+        // If deletion doesn't go through in a given time, the program returns false
         if (!deleted) {
             console.log("[A] Max attempts reached for", device + ". Device deletion not confirmed.");
-            return false;
+            allDeleted = false;
         }
     }
 
-    console.log("[A] Continuing to Entra");
-    return true;
+    // If all devices have been confirmed to be deleted, continue
+    if (allDeleted) {
+        console.log("[A] Autopilot deletions complete.");
+        return true;
+    } else {
+        return false;
+    }
 }
 
 // Entra deletion
 export async function deleteEntraDevices(DEVICES) {
+    let allDeleted = true;
+    // Loop through devices and delete them
     for (const device of DEVICES) {
         console.log("[E] Deleting device: " + device);
         try {
             const deletion = await _appClient
             .api(`/devices/${device}`)
-            //.get();
             .delete();
 
             console.log("[E] Device deleted - " + device);
         } catch (error) {
-            console.log(error);
+            console.log("[E] Error!:", error);
             return false;
         }
     };
 
+    // In Entra, we don't have to worry about cache that much so we just set 20 one minute checks
     const interval = 60000, maxChecks = 20;
     for (const device of DEVICES){
         let deleted = false;
@@ -364,12 +392,13 @@ export async function deleteEntraDevices(DEVICES) {
         
         while (!deleted && attempts < maxChecks) {
             console.log("[E] Entra deletion request(s) sent. Checking if device(s) exist (attempts left", (maxChecks - attempts) + ")");
+            await new Promise(resolve => setTimeout(resolve, interval));
+            
             try {
-                await new Promise(resolve => setTimeout(resolve, interval));
                 const check = await _appClient
                 .api(`/devices/${device}`)
                 .get();
-
+                console.log("Returned check:", check);
             } catch (error) {
                 if (error.statusCode === 404) {
                     console.log(`[E] Device ${device} deletion confirmed.`)
@@ -383,10 +412,14 @@ export async function deleteEntraDevices(DEVICES) {
 
         if (!deleted) {
             console.log("[E] Max attempts reached for", device + ". Device deletion not confirmed.");
-            return false;
+            allDeleted = false;
         }
     }
 
-    console.log("[E] Deletions complete.");
-    return true;
+    if (allDeleted) {
+        console.log("[E] Entra deletions complete.");
+        return true;
+    } else {
+        return false;
+    }
 }

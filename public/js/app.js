@@ -234,11 +234,12 @@ async function deleteSerials() {
 
     if (consistency) {
         console.log("Devices to delete: ", intuneDevicesToDelete, autopilotDevicesToDelete, entraDevicesToDelete);
-
+        
         // Delete Intune device
         if (intuneDevicesToDelete.length > 0) {
             intuneResult = await deleteDevices("/api/delete-intune", intuneDevicesToDelete);
             intuneDeleted = intuneResult.success;
+            console.log("intuneDeleted", autopilotDeleted);
         } else {
             intuneDeleted = true;
         }
@@ -248,6 +249,7 @@ async function deleteSerials() {
             if (intuneDeleted){
                 autopilotResult = await deleteDevices("/api/delete-autopilot", autopilotDevicesToDelete);
                 autopilotDeleted = autopilotResult.success;
+                console.log("autopilotDeleted", autopilotDeleted);
             } else {
                 console.log("Cannot continue Autopilot deletion - Intune devices not deleted!");
                 autopilotDeleted = false;
@@ -261,6 +263,7 @@ async function deleteSerials() {
             if (autopilotDeleted) {
                 entraResult = await deleteDevices("/api/delete-entra", entraDevicesToDelete);
                 entraDeleted = entraResult.success;
+                console.log("entraDeleted", entraDeleted);
             } else {
                 console.log("Cannot continue Entra deletion - Autopilot devices not deleted!");
                 entraDeleted = false;
