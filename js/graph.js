@@ -44,15 +44,16 @@ export async function fetchData(serial) {
 
     // The exported serials from app.js - split from the point of linebreak (\n)
     var serial_array = serial.split("\n");
+    var filtered_serials = serial_array.filter(elm => elm);
     var intune = [], autopilot = [], entra = [], result = [];
 
     // Each platform has it's own function for data fetching
-    intune = await fetchIntune(serial_array);
-    autopilot = await fetchAutopilot(serial_array);
-    entra = await fetchEntra(serial_array);
+    intune = await fetchIntune(filtered_serials);
+    autopilot = await fetchAutopilot(filtered_serials);
+    entra = await fetchEntra(filtered_serials);
 
     // Merge data from all the arrays into a final version
-    for (let i = 0; i < (serial_array.length); i++) {
+    for (let i = 0; i < (filtered_serials.length); i++) {
         result.push({
             lastLogin: intune[i].lastLogOnDateTime, // Latest login
             lastLogOnUser: intune[i].lastLogOnUser, // Latest user
