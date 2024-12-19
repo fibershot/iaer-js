@@ -305,8 +305,12 @@ export async function deleteAutopilotDevices(DEVICES) {
                 .delete();
             console.log("[A] Device deleted - " + device);
         } catch (error) {
-            console.log("[A] Error during deletion:", error);
-            return false;
+            if (error.statusCode === 400) {
+                console.log("[A] Device already queried for deletion, skipping. (400)");
+            } else {
+                console.log("[A] ABORTING: Error during deletion:", error);
+                return false;
+            }
         }
     }
 
@@ -379,8 +383,12 @@ export async function deleteEntraDevices(DEVICES) {
 
             console.log("[E] Device deleted - " + device);
         } catch (error) {
-            console.log("[E] Error!:", error);
-            return false;
+            if (error.statusCode === 404) {
+                console.log("[E] Device not found or is already deleted. (404)");
+            } else {
+                console.log("[E] ABORTING: Error while deleting device:", error);
+                return false;
+            }
         }
     };
 
