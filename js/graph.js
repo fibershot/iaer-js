@@ -190,35 +190,37 @@ async function fetchAutopilot(serial_array) {
 // Entra data
 async function fetchEntra(serial_array) {
     var result = [];
-    var data, displayName, deviceId;
 
     // API fetch call
     for (const obj in serial_array) {
-        const device = await _appClient
-        .api("/devices")
-        .header("ConsistencyLevel", "eventual")
-        .search(`"displayName:${serial_array[obj]}"`)
-        .get();
+        const response = await _appClient
+            .api("/devices")
+            .header("ConsistencyLevel", "eventual")
+            .search(`"displayName:${serial_array[obj]}"`)
+            .get();
 
-        data = device.value[0];
+        const devices = response.value || [];
+        const exactMatch = devices.find(device => device.displayName.includes(serial_array[obj]));
 
-        displayName = data?.displayName || "Unknown";
-        deviceId = data?.id || "Unknown";
-
-        result.push({
-            foundEntra: device?.value[0] ? true : false,
-            displayName: displayName,
-            deviceId: deviceId
-        });
-
-        if (result[obj].foundEntra) {
-            console.log("[E] Fetched", serial_array[obj], "from Entra.");
+        if (exactMatch) {
+            result.push({
+                foundEntra: true,
+                displayName: exactMatch.displayName,
+                deviceId: exactMatch.id
+            });
+            console.log("[E] Fetched ", serial_array[obj], "from Entra.");
         } else {
-            console.log("[E] Failed fetch for", serial_array[obj], "from Entra.");
+            result.push({
+                foundEntra: false,
+                displayName: "Unknown",
+                deviceId: "Unknown"
+            });
+            console.log("[E] Failed to find an exact match for", serial_array[obj], "from Entra.");
         }
     }
     return result;
 }
+
 
 // Fetch user from the lastest user ID that logged in
 async function fetchUser(user_id){
